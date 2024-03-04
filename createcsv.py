@@ -2,7 +2,7 @@ import requests
 from pprint import pformat
 
 station_id = "44t"
-param = "PM25,TEMP"
+param = "PM25,PM10,O3,WS,TEMP,RH,WD"
 data_type = "hr"
 start_date = "2023-12-01"
 end_date = "2024-03-01"
@@ -16,5 +16,27 @@ response_json = response.json()
 import pandas as pd
 
 pd_from_dict = pd.DataFrame.from_dict(response_json["stations"][0]["data"])
+
+#cleaning data
+pd_from_dict.loc[pd_from_dict['TEMP'] == 0, 'TEMP'] = pd_from_dict['TEMP'].mean()
+pd_from_dict.loc[pd_from_dict['TEMP'] > 40, 'TEMP'] = pd_from_dict['TEMP'].mean()
+pd_from_dict.loc[pd_from_dict['PM25'] == 0, 'PM25'] = pd_from_dict['PM25'].mean()
+pd_from_dict.loc[pd_from_dict['PM25'] > 1000, 'PM25'] = pd_from_dict['PM25'].mean()
+pd_from_dict.loc[pd_from_dict['PM25'] < 0, 'PM25'] = pd_from_dict['PM25'].mean()
+pd_from_dict.loc[pd_from_dict['PM10'] == 0, 'PM10'] = pd_from_dict['PM10'].mean()
+pd_from_dict.loc[pd_from_dict['PM10'] > 1000, 'PM10'] = pd_from_dict['PM10'].mean()
+pd_from_dict.loc[pd_from_dict['PM10'] < 0, 'PM10'] = pd_from_dict['PM10'].mean()
+pd_from_dict.loc[pd_from_dict['O3'] == 0, 'O3'] = pd_from_dict['O3'].mean()
+pd_from_dict.loc[pd_from_dict['O3'] > 200, 'O3'] = pd_from_dict['O3'].mean()
+pd_from_dict.loc[pd_from_dict['O3'].isnull(), 'O3'] = pd_from_dict['O3'].mean()
+pd_from_dict.loc[pd_from_dict['WS'] == 0, 'WS'] = pd_from_dict['WS'].mean()
+pd_from_dict['WS'] = pd_from_dict['WS'].astype(int)
+pd_from_dict.loc[pd_from_dict['RH'] == 0, 'RH'] = pd_from_dict['RH'].mean()
+pd_from_dict.loc[pd_from_dict['RH'] > 100, 'RH'] = pd_from_dict['RH'].mean()
+pd_from_dict.loc[pd_from_dict['WD'] == 0, 'WD'] = pd_from_dict['WD'].mean()
+pd_from_dict.loc[pd_from_dict['WD'] > 360, 'WD'] = pd_from_dict['WD'].mean()
+pd_from_dict['DATETIMEDATA'] = pd.to_datetime(pd_from_dict['DATETIMEDATA'])
+
+#save to csv
 pd_from_dict.to_csv(f"air4.csv",index=False)
 print(pformat(pd_from_dict))

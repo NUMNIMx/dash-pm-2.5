@@ -78,19 +78,48 @@ app.layout = html.Div(
                     ),
                     className="card",
                 ),
+            ],
+            className="wrapper",
+        ),
+        html.Div(
+            children=[
                 html.Div(
-                    children=dcc.Graph(
-                        id="mean-chart", config={"displayModeBar": False},
-                    ),
+                    children=[
+                        html.Div(
+                            children="Statistics",
+                            className="menu-title"
+                        ),
+                        html.Div(
+                            id="stats-table",
+                            className="stats-table"
+                        ),
+                    ],
                     className="card",
                 ),
             ],
             className="wrapper",
         ),
     ]
-
-    
 )
+
+@app.callback(
+    Output("stats-table", "children"),
+    [
+        Input("parameter-filter", "value"),
+        Input("date-range", "start_date"),
+        Input("date-range", "end_date"),
+    ],
+)
+def update_stats_table(selected_parameter, start_date, end_date):
+    mask = (
+        (data["DATETIMEDATA"] >= start_date)
+        & (data["DATETIMEDATA"] <= end_date)
+    )
+    filtered_data = data.loc[mask]
+    stats = filtered_data[selected_parameter].describe().reset_index()
+    stats.columns = ["Statistic", "Value"]
+    stats_table = dbc.Table.from_dataframe(stats, striped=True, bordered=True, hover=True)
+    return stats_table
 
 @app.callback(
     Output("line-chart", "figure"),
@@ -100,7 +129,7 @@ app.layout = html.Div(
         Input("date-range", "end_date"),
     ],
 )
-def update_chart(selected_parameter, start_date, end_date):
+def update_line_chart(selected_parameter, start_date, end_date):
     mask = (
         (data["DATETIMEDATA"] >= start_date)
         & (data["DATETIMEDATA"] <= end_date)
@@ -109,46 +138,15 @@ def update_chart(selected_parameter, start_date, end_date):
     trace = {
         "x": filtered_data["DATETIMEDATA"],
         "y": filtered_data[selected_parameter],
-        "type": "lines",
-        "name": selected_parameter,
+        "type": "line",
     }
     layout = {
-        "title": f"{selected_parameter} over Time",
+        "title": "Air Quality Over Time",
         "xaxis": {"title": "Datetime"},
         "yaxis": {"title": selected_parameter},
         "colorway": ["#17B897"],  # or any other color
     }
     return {"data": [trace], "layout": layout}
-
-@app.callback(
-    Output("mean-chart", "figure"),
-    [
-        Input("parameter-filter", "value"),
-        Input("date-range", "start_date"),
-        Input("date-range", "end_date"),
-    ],
-)
-def update_mean_chart(selected_parameter, start_date, end_date):
-    mask = (
-        (data["DATETIMEDATA"] >= start_date)
-        & (data["DATETIMEDATA"] <= end_date)
-    )
-    filtered_data = data.loc[mask]
-    mean_value = filtered_data[selected_parameter].mean()
-    trace = {
-        "x": [selected_parameter],
-        "y": [mean_value],
-        "type": "bar",
-        "name": "Mean",
-    }
-    layout = {
-        "title": f"Mean {selected_parameter}",
-        "xaxis": {"title": "Parameter"},
-        "yaxis": {"title": "Mean Value"},
-        "colorway": ["#FFA500"],  # or any other color
-    }
-    return {"data": [trace], "layout": layout}
-
 
 if __name__ == "__main__":
     app.run_server(debug=True)
