@@ -86,7 +86,6 @@ app.layout = html.Div(
                 html.Div(
                     children=[
                         html.Div(
-                            children="Statistics",
                             className="menu-title"
                         ),
                         html.Div(
@@ -101,6 +100,9 @@ app.layout = html.Div(
         ),
     ]
 )
+
+#APP CALLBACKS
+
 
 #for Table
 @app.callback(
@@ -120,7 +122,10 @@ def update_stats_table(selected_parameter, start_date, end_date):
     stats = filtered_data[selected_parameter].describe().reset_index()
     stats.columns = ["Statistic", "Value"]
     stats_table = dbc.Table.from_dataframe(stats, striped=True, bordered=True, hover=True, className="custom-table")
-    return stats_table
+    
+    title = html.Div(children=f"Statistics - {selected_parameter}", className="menu-title")
+    
+    return [title, stats_table]
 
 #for line chart
 @app.callback(
@@ -143,12 +148,13 @@ def update_line_chart(selected_parameter, start_date, end_date):
         "type": "line",
     }
     layout = {
-        "title": "Air Quality Over Time",
+        "title": f"Air Quality Over Time - {selected_parameter}",
         "xaxis": {"title": "Datetime"},
         "yaxis": {"title": selected_parameter},
         "colorway": ["#17B897"],  # or any other color
     }
     return {"data": [trace], "layout": layout}
+
 
 if __name__ == "__main__":
     app.run_server(debug=True)
