@@ -67,6 +67,25 @@ app.layout = html.Div(
                         ),
                     ]
                 ),
+                html.Div(
+                    children=[
+                        html.Div(
+                            children="Chart Type",
+                            className="menu-title"
+                        ),
+                        dcc.Dropdown(
+                            id="chart-type",
+                            options=[
+                                {"label": "Line Chart", "value": "line"},
+                                {"label": "Bar Chart", "value": "bar"},
+                                {"label": "Scatter Plot", "value": "scatter"},
+                            ],
+                            value="line",
+                            clearable=False,
+                            className="dropdown",
+                        ),
+                    ]
+                ),
             ],
             className="menu",
         ),
@@ -74,7 +93,7 @@ app.layout = html.Div(
             children=[
                 html.Div(
                     children=dcc.Graph(
-                        id="line-chart", config={"displayModeBar": False},
+                        id="chart", config={"displayModeBar": False},
                     ),
                     className="card",
                 ),
@@ -101,10 +120,9 @@ app.layout = html.Div(
     ]
 )
 
-#APP CALLBACKS
+# APP CALLBACKS
 
-
-#for Table
+# for Table
 @app.callback(
     Output("stats-table", "children"),
     [
@@ -123,30 +141,47 @@ def update_stats_table(selected_parameter, start_date, end_date):
     stats.columns = ["Statistic", "Value"]
     stats_table = dbc.Table.from_dataframe(stats, striped=True, bordered=True, hover=True, className="custom-table")
     
-    title = html.Div(children=f"Statistics - {selected_parameter}", className="menu-title")
+    title = html.Div(children=f"Statistics - {selected_parameter} ({start_date}-{end_date})", className="menu-title")
     
     return [title, stats_table]
 
-#for line chart
+# for updating chart
 @app.callback(
-    Output("line-chart", "figure"),
+    Output("chart", "figure"),
     [
         Input("parameter-filter", "value"),
         Input("date-range", "start_date"),
         Input("date-range", "end_date"),
+        Input("chart-type", "value"),
     ],
 )
-def update_line_chart(selected_parameter, start_date, end_date):
+def update_chart(selected_parameter, start_date, end_date, chart_type):
     mask = (
         (data["DATETIMEDATA"] >= start_date)
         & (data["DATETIMEDATA"] <= end_date)
     )
     filtered_data = data.loc[mask]
-    trace = {
-        "x": filtered_data["DATETIMEDATA"],
-        "y": filtered_data[selected_parameter],
-        "type": "line",
-    }
+    
+    if chart_type == "line":
+        trace = {
+            "x": filtered_data["DATETIMEDATA"],
+            "y": filtered_data[selected_parameter],
+            "type": "line",
+        }
+    elif chart_type == "scatter":
+        trace = {
+            "x": filtered_data["DATETIMEDATA"],
+            "y": filtered_data[selected_parameter],
+            "mode": "markers",  # Scatter plot with markers
+            "type": "scatter",
+        }
+    elif chart_type == "bar":
+        trace = {
+            "x": filtered_data["DATETIMEDATA"],
+            "y": filtered_data[selected_parameter],
+            "type": "bar",
+        }
+        
     layout = {
         "title": f"Air Quality Over Time - {selected_parameter}",
         "xaxis": {"title": "Datetime"},
