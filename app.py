@@ -102,6 +102,7 @@ app.layout = html.Div(
     ]
 )
 
+#for Table
 @app.callback(
     Output("stats-table", "children"),
     [
@@ -118,9 +119,10 @@ def update_stats_table(selected_parameter, start_date, end_date):
     filtered_data = data.loc[mask]
     stats = filtered_data[selected_parameter].describe().reset_index()
     stats.columns = ["Statistic", "Value"]
-    stats_table = dbc.Table.from_dataframe(stats, striped=True, bordered=True, hover=True)
+    stats_table = dbc.Table.from_dataframe(stats, striped=True, bordered=True, hover=True, className="custom-table")
     return stats_table
 
+#for line chart
 @app.callback(
     Output("line-chart", "figure"),
     [
