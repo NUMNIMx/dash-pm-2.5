@@ -78,10 +78,18 @@ app.layout = html.Div(
                     ),
                     className="card",
                 ),
+                html.Div(
+                    children=dcc.Graph(
+                        id="mean-chart", config={"displayModeBar": False},
+                    ),
+                    className="card",
+                ),
             ],
             className="wrapper",
         ),
     ]
+
+    
 )
 
 @app.callback(
@@ -112,7 +120,35 @@ def update_chart(selected_parameter, start_date, end_date):
     }
     return {"data": [trace], "layout": layout}
 
+@app.callback(
+    Output("mean-chart", "figure"),
+    [
+        Input("parameter-filter", "value"),
+        Input("date-range", "start_date"),
+        Input("date-range", "end_date"),
+    ],
+)
+def update_mean_chart(selected_parameter, start_date, end_date):
+    mask = (
+        (data["DATETIMEDATA"] >= start_date)
+        & (data["DATETIMEDATA"] <= end_date)
+    )
+    filtered_data = data.loc[mask]
+    mean_value = filtered_data[selected_parameter].mean()
+    trace = {
+        "x": [selected_parameter],
+        "y": [mean_value],
+        "type": "bar",
+        "name": "Mean",
+    }
+    layout = {
+        "title": f"Mean {selected_parameter}",
+        "xaxis": {"title": "Parameter"},
+        "yaxis": {"title": "Mean Value"},
+        "colorway": ["#FFA500"],  # or any other color
+    }
+    return {"data": [trace], "layout": layout}
+
 
 if __name__ == "__main__":
     app.run_server(debug=True)
-
