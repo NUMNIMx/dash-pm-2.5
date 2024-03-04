@@ -1,4 +1,4 @@
-import dash
+from dash import Dash
 import dash_bootstrap_components as dbc
 from dash import html, dcc, Input, Output
 
@@ -12,10 +12,11 @@ data.sort_values("DATETIMEDATA", inplace=True)
 external_stylesheets = [
     {
         "href": "https://fonts.googleapis.com/css2?"
-                "family=Lato:wght@400;700&display=swap"
+        "family=Lato:wght@400;700&display=swap",
+        "rel": "stylesheet",
     },
 ]
-app = dash.Dash(external_stylesheets=[dbc.themes.DARKLY])
+app = Dash(__name__, external_stylesheets=external_stylesheets)
 server = app.server
 app.title = "Air Quality Analytics: Understand Air Quality!"
 
@@ -82,7 +83,6 @@ app.layout = html.Div(
         ),
     ]
 )
-
 
 @app.callback(
     Output("line-chart", "figure"),
