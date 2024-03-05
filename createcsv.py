@@ -37,7 +37,12 @@ pd_from_dict.loc[pd_from_dict['WD'] == 0, 'WD'] = pd_from_dict['WD'].mean()
 pd_from_dict.loc[pd_from_dict['WD'] > 360, 'WD'] = pd_from_dict['WD'].mean()
 pd_from_dict.loc[pd_from_dict['WD'].isnull(), 'WD'] = pd_from_dict['WD'].mean()
 pd_from_dict['DATETIMEDATA'] = pd.to_datetime(pd_from_dict['DATETIMEDATA'])
+#drop DATETIMEDATA
+pd_from_dict = pd_from_dict.drop(columns=['DATETIMEDATA'])
+#rename columns
+
+
 
 #save to csv
-pd_from_dict.to_csv(f"air4.csv",index=False)
+pd_from_dict.to_csv(f"train.csv",index=False)
 print(pformat(pd_from_dict))
