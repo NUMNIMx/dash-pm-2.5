@@ -1,14 +1,17 @@
+# Import necessary libraries
 from dash import Dash
 import dash_bootstrap_components as dbc
 from dash import html, dcc, Input, Output
 
 import pandas as pd
-import plotly.express as px
+import plotly.graph_objs as go
 
+# Read data from CSV file
 data = pd.read_csv("air4.csv")
 data["DATETIMEDATA"] = pd.to_datetime(data["DATETIMEDATA"], format="%Y-%m-%d %H:%M:%S")
 data.sort_values("DATETIMEDATA", inplace=True)
 
+# Define external stylesheets
 external_stylesheets = [
     {
         "href": "https://fonts.googleapis.com/css2?"
@@ -16,10 +19,13 @@ external_stylesheets = [
         "rel": "stylesheet",
     },
 ]
+
+# Initialize the Dash app
 app = Dash(__name__, external_stylesheets=external_stylesheets)
 server = app.server
 app.title = "Air Quality Analytics: Understand Air Quality!"
 
+# Define the layout of the app
 app.layout = html.Div(
     children=[
         html.Div(
@@ -103,6 +109,17 @@ app.layout = html.Div(
         html.Div(
             children=[
                 html.Div(
+                    children=dcc.Graph(
+                        id="daily-stats", config={"displayModeBar": False},
+                    ),
+                    className="card",
+                ),
+            ],
+            className="wrapper",
+        ),
+        html.Div(
+            children=[
+                html.Div(
                     children=[
                         html.Div(
                             className="menu-title"
@@ -120,9 +137,9 @@ app.layout = html.Div(
     ]
 )
 
-# APP CALLBACKS
+# Define app callbacks
 
-# for Table
+# Callback for updating statistics table
 @app.callback(
     Output("stats-table", "children"),
     [
@@ -137,7 +154,7 @@ def update_stats_table(selected_parameter, start_date, end_date):
         & (data["DATETIMEDATA"] <= end_date)
     )
     filtered_data = data.loc[mask]
-    stats = filtered_data[selected_parameter].describe().reset_index()
+    stats = filtered_data[selected_parameter].describe().reset_index().round(2)
     stats.columns = ["Statistic", "Value"]
     stats_table = dbc.Table.from_dataframe(stats, striped=True, bordered=True, hover=True, className="custom-table")
     
@@ -145,7 +162,7 @@ def update_stats_table(selected_parameter, start_date, end_date):
     
     return [title, stats_table]
 
-# for updating chart
+# Callback for updating chart
 @app.callback(
     Output("chart", "figure"),
     [
@@ -190,6 +207,45 @@ def update_chart(selected_parameter, start_date, end_date, chart_type):
     }
     return {"data": [trace], "layout": layout}
 
+# Callback for updating daily statistics chart
+@app.callback(
+    Output("daily-stats", "figure"),
+    [
+        Input("parameter-filter", "value"),
+        Input("date-range", "start_date"),
+        Input("date-range", "end_date"),
+    ],
+)
+def update_daily_stats(selected_parameter, start_date, end_date):
+    mask = (
+        (data["DATETIMEDATA"] >= start_date)
+        & (data["DATETIMEDATA"] <= end_date)
+    )
+    filtered_data = data.loc[mask]
 
+    # Group by date and calculate daily maximum, minimum, and mean values
+    daily_stats = filtered_data.groupby(filtered_data["DATETIMEDATA"].dt.date)[selected_parameter].agg(['max', 'min', 'mean']).reset_index()
+
+    # Create traces for each statistic
+    traces = []
+    for stat in ['max', 'min', 'mean']:
+        traces.append(go.Scatter(
+            x=daily_stats["DATETIMEDATA"],
+            y=daily_stats[stat],
+            mode='lines',
+            name=stat.capitalize()  # Capitalize the statistic name for legend
+        ))
+
+    layout = {
+        "title": f"Daily Statistics - {selected_parameter}",
+        "xaxis": {"title": "Date"},
+        "yaxis": {"title": selected_parameter},
+        "colorway": ["#FF5733", "#33FF57", "#5733FF"],  # Different color for each statistic
+    }
+
+    return {"data": traces, "layout": layout}
+
+
+# Run the app if the script is executed directly
 if __name__ == "__main__":
     app.run_server(debug=True)
