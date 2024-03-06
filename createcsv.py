@@ -5,7 +5,7 @@ station_id = "44t"
 param = "PM25,O3,WS,TEMP,RH,WD"
 data_type = "hr"
 start_date = "2023-12-01"
-end_date = "2024-03-04"
+end_date = "2024-02-28"
 start_time = "00"
 end_time = "23"
 url = f"http://air4thai.com/forweb/getHistoryData.php?stationID={station_id}&param={param}&type={data_type}&sdate={start_date}&edate={end_date}&stime={start_time}&etime={end_time}"
@@ -38,7 +38,7 @@ pd_from_dict.loc[pd_from_dict['WD'] > 360, 'WD'] = pd_from_dict['WD'].mean()
 pd_from_dict.loc[pd_from_dict['WD'].isnull(), 'WD'] = pd_from_dict['WD'].mean()
 pd_from_dict['DATETIMEDATA'] = pd.to_datetime(pd_from_dict['DATETIMEDATA'])
 #drop DATETIMEDATA
-pd_from_dict = pd_from_dict.drop(columns=['DATETIMEDATA'])
+
 #rename columns
 
 
