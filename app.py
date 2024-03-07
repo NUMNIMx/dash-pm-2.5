@@ -11,6 +11,10 @@ data = pd.read_csv("air4.csv")
 data["DATETIMEDATA"] = pd.to_datetime(data["DATETIMEDATA"], format="%Y-%m-%d %H:%M:%S")
 data.sort_values("DATETIMEDATA", inplace=True)
 
+# data2 = pd.read_csv("model_predictions.csv")
+# data2["DATETIMEDATA"] = pd.to_datetime(data["DATETIMEDATA"], format="%Y-%m-%d %H:%M:%S")
+# data2.sort_values("DATETIMEDATA", inplace=True)
+
 # Define external stylesheets
 external_stylesheets = [
     {
