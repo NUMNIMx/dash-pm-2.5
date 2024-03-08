@@ -7,7 +7,7 @@ import pandas as pd
 import plotly.graph_objs as go
 
 # Read data from CSV file
-data = pd.read_csv("air4.csv")
+data = pd.read_csv("predict_hour.csv")
 data["DATETIMEDATA"] = pd.to_datetime(data["DATETIMEDATA"], format="%Y-%m-%d %H:%M:%S")
 data.sort_values("DATETIMEDATA", inplace=True)
 
@@ -253,3 +253,4 @@ def update_daily_stats(selected_parameter, start_date, end_date):
 # Run the app if the script is executed directly
 if __name__ == "__main__":
     app.run_server(debug=True)
+
