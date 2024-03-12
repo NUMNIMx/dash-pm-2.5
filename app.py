@@ -330,8 +330,64 @@ predict_layout = html.Div(
             ],
             className="wrapper",
         ),
+        html.Div(
+            children=[
+                html.Div(
+                    children=[
+                        html.Div(
+                            className="menu-title"
+                        ),
+                        html.Div(
+                            id="stats-table-predict",
+                            className="stats-table"
+                        ),
+                    ],
+                    className="card",
+                ),
+            ],
+            className="wrapper",
+        ),
     ]
 )
+
+# Callback for updating statistics table for prediction layout
+@app.callback(
+    Output("stats-table-predict", "children"),
+    [
+        Input("parameter-filter-predict", "value"),
+    ],
+)
+def update_stats_table_predict(selected_parameter):
+    start_date = data_pred_hour["DATETIMEDATA"].min()
+    end_date = data_pred_hour["DATETIMEDATA"].max()
+    
+    mask = (
+        (data_pred_hour["DATETIMEDATA"] >= start_date)
+        & (data_pred_hour["DATETIMEDATA"] <= end_date)
+    )
+    filtered_data = data_pred_hour.loc[mask]
+    stats = filtered_data[selected_parameter].describe().reset_index().round(2)
+    stats.columns = ["Statistic", "Value"]
+    
+    # Get the minimum and maximum values and their dates
+    min_val = filtered_data[selected_parameter].min()
+    min_date = filtered_data.loc[filtered_data[selected_parameter].idxmin()]["DATETIMEDATA"]
+    max_val = filtered_data[selected_parameter].max()
+    max_date = filtered_data.loc[filtered_data[selected_parameter].idxmax()]["DATETIMEDATA"]
+    
+    # Format strings for minimum and maximum values with dates
+    min_val_str = f"{min_val} ({min_date})"
+    max_val_str = f"{max_val} ({max_date})"
+    
+    # Replace the min and max values in the stats dataframe
+    stats.loc[stats["Statistic"] == "min", "Value"] = min_val_str
+    stats.loc[stats["Statistic"] == "max", "Value"] = max_val_str
+    
+    stats_table = dbc.Table.from_dataframe(stats, striped=True, bordered=True, hover=True, className="custom-table")
+    
+    title = html.Div(children=f"Statistics - {selected_parameter}", className="menu-title")
+    
+    return [title, stats_table]
 
 @app.callback(
     Output("chart-predict", "figure"),
