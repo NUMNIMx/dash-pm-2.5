@@ -89,7 +89,7 @@ body {
     background-color: #f2f2f2;
 }
 .navbar {
-    background-color: #0055ff;
+    background-color: #ffffff;
     display: flex;
     padding: 10px 20px;
 }
@@ -102,13 +102,14 @@ body {
 }
 
 .navbar .nav a {
-    color: white;
+    color: rgb(0, 0, 0);
     padding: 10px 15px;
     text-decoration: none;
     transition: 0.3s;
 }
 
 .navbar .nav a:hover {
-    background-color: #222;
+    color: #ffffff;
+    background-color: #079A82;
     box-shadow: 0 0 3px rgba(0, 0, 0, 0.2);
 }

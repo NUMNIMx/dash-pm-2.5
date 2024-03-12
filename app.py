@@ -37,8 +37,8 @@ navbar = html.Div(
         html.Nav(
             className="nav",
             children=[
-                html.A('Analysis', href='/'),
-                html.A('Prediction', href='/page-2'),
+                html.A('🔍 Analysis 🔍', href='/'),
+                html.A('🎯 Prediction 🎯', href='/page-2'),
             ]
         )
     ]
