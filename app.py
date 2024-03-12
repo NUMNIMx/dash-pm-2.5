@@ -11,7 +11,7 @@ data_air["DATETIMEDATA"] = pd.to_datetime(data_air["DATETIMEDATA"], format="%Y-%
 data_air.sort_values("DATETIMEDATA", inplace=True)
 
 # Read data from CSV file for prediction
-data_pred_hour = pd.read_csv("predictions_TEMP.csv")
+data_pred_hour = pd.read_csv("Full_predict.csv")
 data_pred_hour["DATETIMEDATA"] = pd.to_datetime(data_pred_hour["DATETIMEDATA"], format="%Y-%m-%d %H:%M:%S")
 data_pred_hour.sort_values("DATETIMEDATA", inplace=True)
 
@@ -158,7 +158,6 @@ main = html.Div(
 
 # Define app callbacks
 
-# Callback for updating statistics table
 @app.callback(
     Output("stats-table", "children"),
     [
@@ -189,6 +188,9 @@ def update_stats_table(selected_parameter, start_date, end_date):
     # Replace the min and max values in the stats dataframe
     stats.loc[stats["Statistic"] == "min", "Value"] = min_val_str
     stats.loc[stats["Statistic"] == "max", "Value"] = max_val_str
+    
+    # Remove rows corresponding to percentiles
+    stats = stats[~stats["Statistic"].isin(['25%', '50%', '75%'])]
     
     stats_table = dbc.Table.from_dataframe(stats, striped=True, bordered=True, hover=True, className="custom-table")
     
@@ -383,6 +385,8 @@ def update_stats_table_predict(selected_parameter):
     stats.loc[stats["Statistic"] == "min", "Value"] = min_val_str
     stats.loc[stats["Statistic"] == "max", "Value"] = max_val_str
     
+    stats = stats[~stats["Statistic"].isin(['25%', '50%', '75%'])]
+
     stats_table = dbc.Table.from_dataframe(stats, striped=True, bordered=True, hover=True, className="custom-table")
     
     title = html.Div(children=f"Statistics - {selected_parameter}", className="menu-title")
@@ -399,7 +403,7 @@ def update_prediction_chart(selected_parameter):
     trace = {
         "x": data_pred_hour["DATETIMEDATA"],
         "y": data_pred_hour[selected_parameter],
-        "type": "line",
+        "type": "bar",
     }
 
     layout = {
