@@ -1,15 +1,19 @@
 # Import necessary libraries
+from flask import Flask, render_template
 from dash import Dash, html, dcc, Input, Output
-import dash_bootstrap_components as dbc
-from dash import html, dcc, Output
-
 import pandas as pd
 import plotly.graph_objs as go
+import dash_bootstrap_components as dbc
 
 # Read data from CSV file
-data = pd.read_csv("air4.csv")
-data["DATETIMEDATA"] = pd.to_datetime(data["DATETIMEDATA"], format="%Y-%m-%d %H:%M:%S")
-data.sort_values("DATETIMEDATA", inplace=True)
+data_air = pd.read_csv("air4.csv")
+data_air["DATETIMEDATA"] = pd.to_datetime(data_air["DATETIMEDATA"], format="%Y-%m-%d %H:%M:%S")
+data_air.sort_values("DATETIMEDATA", inplace=True)
+
+# Read data from CSV file for prediction
+data_pred = pd.read_csv("model_predictions.csv")
+data_pred["DATETIMEDATA"] = pd.to_datetime(data_pred["DATETIMEDATA"], format="%Y-%m-%d %H:%M:%S")
+data_pred.sort_values("DATETIMEDATA", inplace=True)
 
 # Define external stylesheets
 external_stylesheets = [
@@ -20,11 +24,13 @@ external_stylesheets = [
     },
 ]
 
-# Initialize the Dash app
-app = Dash(__name__, external_stylesheets=external_stylesheets)
+# Initialize Flask app
+server = Flask(__name__)
+
+# Initialize Dash app
+app = Dash(__name__, server=server, external_stylesheets=external_stylesheets)
 app.title = "Air Quality Analytics: Understand Air Quality!"
 
-# Define the layout of the app
 navbar = html.Div(
     className="navbar",  # Added a class name for styling
     children=[
@@ -32,12 +38,12 @@ navbar = html.Div(
             className="nav",
             children=[
                 html.A('Analysis', href='/'),
-                html.A('Prediction', href='/page-2')
+                html.A('Prediction', href='/page-2'),
             ]
         )
     ]
 )
-
+# Define layout of the Dash app
 app.layout = html.Div(
     children=[
         navbar,
@@ -63,7 +69,7 @@ app.layout = html.Div(
                             id="parameter-filter",
                             options=[
                                 {"label": param, "value": param}
-                                for param in data.columns[1:]
+                                for param in data_air.columns[1:]
                             ],
                             value="PM25",
                             clearable=False,
@@ -79,10 +85,10 @@ app.layout = html.Div(
                         ),
                         dcc.DatePickerRange(
                             id="date-range",
-                            min_date_allowed=data["DATETIMEDATA"].min().date(),
-                            max_date_allowed=data["DATETIMEDATA"].max().date(),
-                            start_date=data["DATETIMEDATA"].min().date(),
-                            end_date=data["DATETIMEDATA"].max().date(),
+                            min_date_allowed=pd.to_datetime(data_air["DATETIMEDATA"]).min(),
+                            max_date_allowed=pd.to_datetime(data_air["DATETIMEDATA"]).max(),
+                            start_date=data_air["DATETIMEDATA"].min(),
+                            end_date=data_air["DATETIMEDATA"].max(),
                         ),
                     ]
                 ),
@@ -153,8 +159,6 @@ app.layout = html.Div(
 # Define app callbacks
 
 # Callback for updating statistics table
-from datetime import datetime
-
 @app.callback(
     Output("stats-table", "children"),
     [
@@ -164,13 +168,11 @@ from datetime import datetime
     ],
 )
 def update_stats_table(selected_parameter, start_date, end_date):
-    start_date = datetime.strptime(start_date, '%Y-%m-%d')
-    end_date = datetime.strptime(end_date, '%Y-%m-%d')
     mask = (
-        (data["DATETIMEDATA"] >= start_date)
-        & (data["DATETIMEDATA"] <= end_date)
+        (data_air["DATETIMEDATA"] >= start_date)
+        & (data_air["DATETIMEDATA"] <= end_date)
     )
-    filtered_data = data.loc[mask]
+    filtered_data = data_air.loc[mask]
     stats = filtered_data[selected_parameter].describe().reset_index().round(2)
     stats.columns = ["Statistic", "Value"]
     
@@ -205,13 +207,11 @@ def update_stats_table(selected_parameter, start_date, end_date):
     ],
 )
 def update_chart(selected_parameter, start_date, end_date, chart_type):
-    start_date = datetime.strptime(start_date, '%Y-%m-%d')
-    end_date = datetime.strptime(end_date, '%Y-%m-%d')
     mask = (
-        (data["DATETIMEDATA"] >= start_date)
-        & (data["DATETIMEDATA"] <= end_date)
+        (data_air["DATETIMEDATA"] >= start_date)
+        & (data_air["DATETIMEDATA"] <= end_date)
     )
-    filtered_data = data.loc[mask]
+    filtered_data = data_air.loc[mask]
     
     if chart_type == "line":
         trace = {
@@ -251,13 +251,11 @@ def update_chart(selected_parameter, start_date, end_date, chart_type):
     ],
 )
 def update_daily_stats(selected_parameter, start_date, end_date):
-    start_date = datetime.strptime(start_date, '%Y-%m-%d')
-    end_date = datetime.strptime(end_date, '%Y-%m-%d')
     mask = (
-        (data["DATETIMEDATA"] >= start_date)
-        & (data["DATETIMEDATA"] <= end_date)
+        (data_air["DATETIMEDATA"] >= start_date)
+        & (data_air["DATETIMEDATA"] <= end_date)
     )
-    filtered_data = data.loc[mask]
+    filtered_data = data_air.loc[mask]
 
     # Group by date and calculate daily maximum, minimum, and mean values
     daily_stats = filtered_data.groupby(filtered_data["DATETIMEDATA"].dt.date)[selected_parameter].agg(['max', 'min', 'mean']).reset_index()
@@ -281,7 +279,63 @@ def update_daily_stats(selected_parameter, start_date, end_date):
 
     return {"data": traces, "layout": layout}
 
+# Define Dash layout for predictions
+predict_layout = html.Div(
+    children=[
+        html.Div(
+            children=[
+                html.P(children="📈", className="header-emoji"),
+                html.H1(
+                    children="Model Predictions", className="header-title"
+                ),
+                html.P(
+                    children="Visualize the predictions made by the model",
+                    className="header-description",
+                ),
+            ],
+            className="header",
+        ),
+        html.Div(
+            children=[
+                html.Div(
+                    children=[
+                        html.Div(children="Parameter", className="menu-title"),
+                        dcc.Dropdown(
+                            id="parameter-filter-predict",
+                            options=[
+                                {"label": param, "value": param}
+                                for param in data_pred.columns[1:]
+                            ],
+                            value="predicted_value",  # Adjust this according to your data
+                            clearable=False,
+                            className="dropdown",
+                        ),
+                    ]
+                ),
+            ],
+            className="menu",
+        ),
+        html.Div(
+            children=[
+                html.Div(
+                    children=dcc.Graph(
+                        id="chart-predict", config={"displayModeBar": False},
+                    ),
+                    className="card",
+                ),
+            ],
+            className="wrapper",
+        ),
+    ]
+)
 
-# Run the app if the script is executed directly
+
+# Define Flask route to serve Dash app
+@server.route('/')
+def index():
+    return app.index()
+
+
+# Run the server
 if __name__ == "__main__":
-    app.run_server(debug=True)
+    server.run(debug=True)
