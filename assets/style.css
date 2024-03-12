@@ -88,3 +88,27 @@ body {
 .custom-table th {
     background-color: #f2f2f2;
 }
+.navbar {
+    background-color: #0055ff;
+    display: flex;
+    padding: 10px 20px;
+}
+
+.navbar .nav {
+    display: flex;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.navbar .nav a {
+    color: white;
+    padding: 10px 15px;
+    text-decoration: none;
+    transition: 0.3s;
+}
+
+.navbar .nav a:hover {
+    background-color: #222;
+    box-shadow: 0 0 3px rgba(0, 0, 0, 0.2);
+}

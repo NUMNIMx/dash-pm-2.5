@@ -1,19 +1,15 @@
 # Import necessary libraries
-from dash import Dash
+from dash import Dash, html, dcc, Input, Output
 import dash_bootstrap_components as dbc
-from dash import html, dcc, Input, Output
+from dash import html, dcc, Output
 
 import pandas as pd
 import plotly.graph_objs as go
 
 # Read data from CSV file
-data = pd.read_csv("predict_hour.csv")
+data = pd.read_csv("air4.csv")
 data["DATETIMEDATA"] = pd.to_datetime(data["DATETIMEDATA"], format="%Y-%m-%d %H:%M:%S")
 data.sort_values("DATETIMEDATA", inplace=True)
-
-# data2 = pd.read_csv("model_predictions.csv")
-# data2["DATETIMEDATA"] = pd.to_datetime(data["DATETIMEDATA"], format="%Y-%m-%d %H:%M:%S")
-# data2.sort_values("DATETIMEDATA", inplace=True)
 
 # Define external stylesheets
 external_stylesheets = [
@@ -26,12 +22,25 @@ external_stylesheets = [
 
 # Initialize the Dash app
 app = Dash(__name__, external_stylesheets=external_stylesheets)
-server = app.server
 app.title = "Air Quality Analytics: Understand Air Quality!"
 
 # Define the layout of the app
+navbar = html.Div(
+    className="navbar",  # Added a class name for styling
+    children=[
+        html.Nav(
+            className="nav",
+            children=[
+                html.A('Analysis', href='/'),
+                html.A('Prediction', href='/page-2')
+            ]
+        )
+    ]
+)
+
 app.layout = html.Div(
     children=[
+        navbar,
         html.Div(
             children=[
                 html.P(children="🌬️", className="header-emoji"),
@@ -155,6 +164,8 @@ from datetime import datetime
     ],
 )
 def update_stats_table(selected_parameter, start_date, end_date):
+    start_date = datetime.strptime(start_date, '%Y-%m-%d')
+    end_date = datetime.strptime(end_date, '%Y-%m-%d')
     mask = (
         (data["DATETIMEDATA"] >= start_date)
         & (data["DATETIMEDATA"] <= end_date)
@@ -194,6 +205,8 @@ def update_stats_table(selected_parameter, start_date, end_date):
     ],
 )
 def update_chart(selected_parameter, start_date, end_date, chart_type):
+    start_date = datetime.strptime(start_date, '%Y-%m-%d')
+    end_date = datetime.strptime(end_date, '%Y-%m-%d')
     mask = (
         (data["DATETIMEDATA"] >= start_date)
         & (data["DATETIMEDATA"] <= end_date)
@@ -238,6 +251,8 @@ def update_chart(selected_parameter, start_date, end_date, chart_type):
     ],
 )
 def update_daily_stats(selected_parameter, start_date, end_date):
+    start_date = datetime.strptime(start_date, '%Y-%m-%d')
+    end_date = datetime.strptime(end_date, '%Y-%m-%d')
     mask = (
         (data["DATETIMEDATA"] >= start_date)
         & (data["DATETIMEDATA"] <= end_date)
@@ -270,4 +285,3 @@ def update_daily_stats(selected_parameter, start_date, end_date):
 # Run the app if the script is executed directly
 if __name__ == "__main__":
     app.run_server(debug=True)
-
