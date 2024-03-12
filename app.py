@@ -1,5 +1,5 @@
 # Import necessary libraries
-from flask import Flask, render_template
+from flask import Flask, render_template_string
 from dash import Dash, html, dcc, Input, Output
 import pandas as pd
 import plotly.graph_objs as go
@@ -11,9 +11,9 @@ data_air["DATETIMEDATA"] = pd.to_datetime(data_air["DATETIMEDATA"], format="%Y-%
 data_air.sort_values("DATETIMEDATA", inplace=True)
 
 # Read data from CSV file for prediction
-data_pred = pd.read_csv("model_predictions.csv")
-data_pred["DATETIMEDATA"] = pd.to_datetime(data_pred["DATETIMEDATA"], format="%Y-%m-%d %H:%M:%S")
-data_pred.sort_values("DATETIMEDATA", inplace=True)
+data_pred_hour = pd.read_csv("predictions_TEMP.csv")
+data_pred_hour["DATETIMEDATA"] = pd.to_datetime(data_pred_hour["DATETIMEDATA"], format="%Y-%m-%d %H:%M:%S")
+data_pred_hour.sort_values("DATETIMEDATA", inplace=True)
 
 # Define external stylesheets
 external_stylesheets = [
@@ -28,7 +28,7 @@ external_stylesheets = [
 server = Flask(__name__)
 
 # Initialize Dash app
-app = Dash(__name__, server=server, external_stylesheets=external_stylesheets)
+app = Dash(__name__, server=server, external_stylesheets=external_stylesheets, suppress_callback_exceptions=True)
 app.title = "Air Quality Analytics: Understand Air Quality!"
 
 navbar = html.Div(
@@ -44,7 +44,7 @@ navbar = html.Div(
     ]
 )
 # Define layout of the Dash app
-app.layout = html.Div(
+main = html.Div(
     children=[
         navbar,
         html.Div(
@@ -279,9 +279,12 @@ def update_daily_stats(selected_parameter, start_date, end_date):
 
     return {"data": traces, "layout": layout}
 
-# Define Dash layout for predictions
+
+
+# Modify predict_layout to include the graph using data_pred_hour
 predict_layout = html.Div(
     children=[
+        navbar,
         html.Div(
             children=[
                 html.P(children="📈", className="header-emoji"),
@@ -304,15 +307,16 @@ predict_layout = html.Div(
                             id="parameter-filter-predict",
                             options=[
                                 {"label": param, "value": param}
-                                for param in data_pred.columns[1:]
+                                for param in data_pred_hour.columns[1:]
                             ],
-                            value="predicted_value",  # Adjust this according to your data
+                            value="PM25",  # Adjust this according to your data
                             clearable=False,
                             className="dropdown",
                         ),
                     ]
                 ),
             ],
+            
             className="menu",
         ),
         html.Div(
@@ -329,13 +333,42 @@ predict_layout = html.Div(
     ]
 )
 
+@app.callback(
+    Output("chart-predict", "figure"),
+    [
+        Input("parameter-filter-predict", "value"),
+    ],
+)
+def update_prediction_chart(selected_parameter):
+    trace = {
+        "x": data_pred_hour["DATETIMEDATA"],
+        "y": data_pred_hour[selected_parameter],
+        "type": "line",
+    }
+
+    layout = {
+        "title": f"Model Predictions - {selected_parameter}",
+        "xaxis": {"title": "Datetime"},
+        "yaxis": {"title": selected_parameter},
+        "colorway": ["#17B897"],  # or any other color
+    }
+    return {"data": [trace], "layout": layout}
+
+app.layout = html.Div([
+    dcc.Location(id='url', refresh=False),
+    html.Div(id='page-content'),
+    dcc.Interval(id='interval-component',interval=60000)
+    ]
+)
 
 # Define Flask route to serve Dash app
-@server.route('/')
-def index():
-    return app.index()
-
+@app.callback(Output('page-content', 'children'), Input('url', 'pathname'))
+def display_page(pathname):
+    if pathname == '/':
+        return main
+    elif pathname == '/page-2':
+        return predict_layout
 
 # Run the server
 if __name__ == "__main__":
-    server.run(debug=True)
+    app.run_server(debug=True)
