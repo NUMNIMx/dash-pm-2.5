@@ -92,6 +92,7 @@ body {
     background-color: #ffffff;
     display: flex;
     padding: 10px 20px;
+    justify-content: center;
 }
 
 .navbar .nav {
@@ -106,10 +107,13 @@ body {
     padding: 10px 15px;
     text-decoration: none;
     transition: 0.3s;
+    margin: auto;
+    border-radius: 5%;
 }
 
 .navbar .nav a:hover {
     color: #ffffff;
-    background-color: #079A82;
+    background-color: #3f8edd;
     box-shadow: 0 0 3px rgba(0, 0, 0, 0.2);
+    font-size: 26px;
 }
