@@ -37,19 +37,20 @@ navbar = html.Div(
         html.Nav(
             className="nav",
             children=[
-                html.A('🔍 Analysis 🔍', href='/'),
+                html.A('🔍 Analysis 🔍', href='/', id='analysis-link'),  # Added id attribute
                 html.A('🎯 Prediction 🎯', href='/page-2'),
             ]
         )
     ]
 )
+
 # Define layout of the Dash app
 main = html.Div(
     children=[
         navbar,
         html.Div(
             children=[
-                html.P(children="🌬️", className="header-emoji"),
+                html.P(children="⛅️", className="header-emoji"),
                 html.H1(
                     children="Air Quality Analytics", className="header-title"
                 ),

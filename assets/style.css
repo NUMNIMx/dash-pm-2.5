@@ -14,6 +14,11 @@ body {
     font-size: 48px;
     margin: 0 auto;
     text-align: center;
+    transition: transform 0.5s;
+}
+.header-emoji:hover {
+    transform: scale(2);
+    cursor: pointer;
 }
 
 .header-title {
@@ -22,6 +27,12 @@ body {
     font-weight: bold;
     text-align: center;
     margin: 0 auto;
+    transition: transform 0.5s;
+}
+.header-title:hover{
+    cursor: pointer;
+    transform: scale(1.5);
+    color: aqua;
 }
 
 .header-description {
@@ -116,4 +127,18 @@ body {
     background-color: #3f8edd;
     box-shadow: 0 0 3px rgba(0, 0, 0, 0.2);
     font-size: 26px;
+    text-decoration-color: #ffffff; 
+}
+
+.navbar .nav a:hover::after {
+    content: '';
+    display: block;
+    width: 0;
+    height: 2px; 
+    background-color: #ffffff; 
+    transition: width 0.3s;
+}
+
+.navbar .nav a:hover:hover::after {
+    width: 100%;
 }
